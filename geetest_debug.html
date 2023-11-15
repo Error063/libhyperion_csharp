@@ -1,0 +1,74 @@
+<!--用于调试极验3的SDK-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://static.geetest.com/static/js/gt.0.4.9.js"></script>
+    <title>Geetest 3 Debug</title>
+</head>
+<body>
+<center>
+    <form>
+        <p>
+            <label for="gt">gt:</label>
+            <input type="text" name="gt" id="gt">
+            <label for="challenge">challenge:</label>
+            <input type="text" name="challenge" id="challenge">
+        </p>
+        <p><span>OR</span></p>
+        <p>
+            <label for="gt-json">Json:</label>
+            <input type="text" name="gt-json" id="gt-json" style="width: 400px">
+        </p>
+        <p><input type="reset" /></p>
+    </form>
+        <p><button id="debug">Debug</button></p>
+    <span>Output</span>
+    <div id="output" style="width: 500px;height: 300px;border: 1px black solid;margin: 10px;line-break: anywhere"></div>
+</center>
+</body>
+<script>
+    document.querySelector('#debug').addEventListener('click', () => {
+        let gt, challenge;
+        let output = document.querySelector('#output');
+        try {
+            let gt_json = JSON.parse(document.querySelector('#gt-json').value);
+            gt = gt_json['gt'];
+            challenge = gt_json['challenge'];
+        } catch (e) {
+            gt = document.querySelector('#gt').value;
+            challenge = document.querySelector('#challenge').value;
+        }
+        if (gt && challenge){
+            console.log(`${gt}, ${challenge}`)
+            initGeetest({
+                gt: gt,
+                challenge: challenge,
+                new_captcha: true,
+                product: 'bind'
+            }, (captchaObj) => {
+                captchaObj.onReady(() => {
+                    captchaObj.verify();
+                }).onSuccess(() => {
+                    let result = captchaObj.getValidate();
+                    let result_send = {
+                        geetest_challenge: result.geetest_challenge,
+                        geetest_validate: result.geetest_validate,
+                        geetest_seccode: result.geetest_seccode,
+                    }
+                    output.innerText = JSON.stringify(result_send)
+                }).onError(() => {
+                    output.innerText = 'error (error from geetest sdk)'
+                })
+            })
+        }else{
+            output.innerText = 'error (no any input received)';
+        }
+    })
+    document.querySelector('#debug').addEventListener('click', () => {
+        document.querySelector('#gt-json').value = '';
+        document.querySelector('#gt').value = '';
+        document.querySelector('#challenge').value = '';
+    })
+</script>
+</html>
